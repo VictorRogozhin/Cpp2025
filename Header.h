@@ -1,55 +1,66 @@
-
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <vector>
-#include <iostream>
-#include <Windows.h>
+#include <cstdlib>
 #include <ctime>
-#define Size 10
-#define radius 3
-#define place_size_x 66
-#define place_size_y 60
+#include <cmath>
+#define window_x 800
+#define window_y 600
 using namespace std;
-constexpr float WINDOW_HEIGHT = 720.0;
-constexpr float WINDOW_WIDTH = 800.0;
 
+class Moving {
+public:
+    double x_speed = 5, y_speed = -5;
+    bool SpeedUp = false;
+};
 
 class Place {
 public:
-    int color, x_pos, y_pos;
-    bool clear, bonus;
-    void Fill(int _x, int _y);
-
+    double x1_pos, x2_pos, y1_pos, y2_pos;
 };
 
-class IsSwitchPos : public Place {
+class Figures : public Place {
 public:
-    bool SetPos(int _x, int _y, int _x1, int _y1, vector< vector<Place>>& field) {
-        if (abs(_x - _x1) + abs(_y - _y1) == 1) {
-            return(true);
-        }
-        else
-            return(false);
-    }
+    void Fill();//заполн€ем объект
+    void Create();//создаем его
 };
 
-void SetBonus(int& _x, int& _y, vector<vector<Place>> field);
-
-void ActBomb(vector <vector <Place>>& field);
-
-void ActRecolor(vector <vector< Place>>& field, int bonus_color, int _x, int _y);
-
-class Bonus :public Place {
+class Platform : public Figures {
 public:
-    void Fiil(int _x, int _y, vector<vector<Place>>& field);
-    int bonuses_type, bonus_color;
-    void ActBonuses(vector <vector <Place>>& field);
+    sf::RectangleShape platform;
+    void Create(int);
 };
 
-void FillField(vector <vector<Place>>& field);
+class Brick : public Figures, public Moving {
+public:
+    sf::RectangleShape brick;
+    int brick_type/* 9 = стенка, 10 = ускор€ющий, остальные обычные */, brick_life;
+    void ColorConverter(); //цвет кирпичика в зависимости от кол-ва жизней
+    void Fill(int number);
+};
 
-void Find(vector <vector <Place>>& field, bool& isFind, vector<Bonus>& bonuses);
+class Ball : public Figures, public Moving {
+public:
+    int Life = 3;
+    bool bottomActive = false;
+    sf::CircleShape ball;
+    void Create();
+    void Update();
+};
 
-void Clear(vector <vector<Place>>& field);
+class Bonuses : public Figures, public Moving {
+public:
+    static const float fallSpeed;//скорость бонуса 
+    sf::CircleShape Bonus;
+    int type;
+    void Update();
+    void Insert(const Brick& _brick);//создаем бонус на месте кирпичика
+    void ApplyBonus(Platform&, Ball&);//эффект при касании платформы
+    void ColorConvert();//цвет в зависимости от действи€€
+};
 
-void Fall(vector <vector<Place>>& field);
+bool CheckCollision(Figures& A, Figures& B);
+void HandleBonusCollisions(vector<Bonuses>& _bonus, Platform& _plat, Ball& _ball);
+void HandleBallPlatformCollision(Ball& _ball, Platform _plat);
+void HandleBallBrickCollisions(Ball& _ball, vector<Brick>& _bricks);
+void DrawBottom(sf::RenderWindow&);
